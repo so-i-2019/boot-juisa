@@ -7,30 +7,35 @@
 
 	org 0x7c00
 
-	xor ax, ax
-	mov ds, ax
-	mov es, ax
-	mov fs, ax
-	mov gs, ax
-	jmp init
+	xor 	ax, ax
+	mov 	ds, ax
+	mov 	es, ax
+	mov 	fs, ax
+	mov 	gs, ax
+	jmp 	init
 
 ;Strings 
-welcome: 	db 'Think of a number from 1 to 1000. We will easily guess it', 0xd, 0xa, 0x0 
-intro: 		db 'Type 0 if its just right, 1 if the number is too low, and 2 if its too high', 0xd, 0xa, 0x0
+welcome: 	db 'Think of a number from 1 to 65000. We will easily guess it', 0xd, 0xa, 0x0 
+intro: 		db 'Type 0 if its just right, 1 if your number is smaller, and 2 if its greater', 0xd, 0xa, 0x0
 guess:		db 'I bet you the number you were thinking is '
 final: 		db 'I told it would be easy!', 0xd, 0xa, 0x0
 new_line:	db 0xd, 0xa, 0x0
 
-init:	
+init:
 	mov 	ah, 0xe		; Configure BIOS teletype mode
 	
 	mov		bx, welcome
 	call 	print_string 
 	
 	mov		bx, intro
-	call 	print_string 
+	call 	print_string
 	
+	mov		cx, 0x0
+	mov		dx, 0xffff
+	call	binary_search
+
 	mov 	bx, 0		; May be 0 because org directive.
+	jmp 	stop
 
 ;; ---------------------------------------
 ;; ---- Prints some string ----------------
@@ -38,15 +43,15 @@ init:
 ;;	bx: string address
 ;; ---------------------------------------
 print_string:
+	push 	ax
 	push 	bx
-	push 	cx
 	
 	jmp 	loop_print
 
 loop_print:
-	mov 	cl, [bx]
+	mov 	al, [bx]
 	
-	cmp 	cl, 0x0
+	cmp 	al, 0x0
 	je 		end_loop_print
 
 	call 	put_char
@@ -55,8 +60,8 @@ loop_print:
 	jmp 	loop_print
 
 end_loop_print:
-	pop 	cx
 	pop 	bx
+	pop 	ax
 	ret
 
 ;; ---------------------------------------
@@ -66,65 +71,71 @@ put_char:
 	push 	ax
 
 	mov 	ah, 0x0e
-	mov 	al, cl
 	int 	0x10
 
 	pop 	ax
 	ret
 
-print_digit:
-	push 	cx
-
-	add 	cx, '0'
-	call 	put_char
-
-	pop 	cx
-	ret
-
 print_int:
-	push 	ax
-	push 	bx
-	push 	cx
-	push 	dx
+	push	ax
 
-	mov 	dx, -1
-	push 	dx
+	mov		cx, 0x3e8
+	call 	print_int_loop
+
+	pop 	ax
 
 print_int_loop:
-	cmp 	cx, 0x0
-	je 		print_int_end
+	push	ax
+	
+	mov		bx, cx
+	call 	divide
+	call 	mod
 
-	mov 	dx, 0x0
-	mov 	bx, 0xa		;; denominador
-	mov 	ax, cx		;; numerador
+	add		bx, '0'
+	mov		ax, bx
+	call 	put_char	
+	
+	mov		bx, 0xa
+	mov		ax, cx
+	call 	divide
+	mov 	cx, ax
 
+	pop 	ax
+
+	cmp		cx, 0x0
+	jne		print_int_loop
+
+	ret
+
+; ax = ax/bx
+divide:
+	push 	dx
+
+	mov		dx, 0x0
 	div 	bx
 
-	mov 	bx, cx
-	mov 	cx, dx
-
-	push 	cx
-
-	mov 	cx, ax
-	jmp 	loop_print_int
-	
-print_int_end:
-	pop 	cx
-
-	cmp 	cx, -1
-	je 		reverse_int
-
-	call 	print_digit
-	jmp 	print_int_end
-
-reverse_int:
-	mov 	bx, new_line
-	call 	print_string
-	
 	pop 	dx
-	pop 	cx
-	pop 	bx
-	pop 	ax
+	ret
+
+mod:
+	push	ax
+	push	cx
+	push	dx
+
+	mov		bx, ax
+	mov		cx, 0xa
+
+	mov		dx, 0x0
+	div		cx
+	
+	mov		dx, 0x0
+	mul		cx
+
+	sub		bx, ax
+
+	pop		dx
+	pop		cx
+	pop		ax
 	ret
 
 ;; ---------------------------------------
@@ -155,21 +166,47 @@ get_int_loop:
 get_int_end:
 	pop 	cx
 	pop 	ax
+	
 	ret
 
 ;---------------------------------------------
-;-----eax, o chute, cx o low, dx o high--------
+;-----eax, o chute, cx o low, dx o high-------
 ;---------------------------------------------
 binary_search:
-	mov 	eax, cx
-	add 	eax, dx
-	mov 	edx, 0x0
-	mov 	ax, 0x2
-	div 	ax
-	mov 	ax, eax
+	mov		ax, cx
+	add		ax, dx
+	mov 	bx, 0x2
 
-end:				; Jump forever (same as jmp end)
-	jmp $
+	call	divide
+	call	print_int
+
+	call	get_int
+
+	cmp		bx, 0x0
+	je	 	rigthAns
+	
+	cmp		bx, 0x1
+	je		tooMuch
+
+	jmp		tooLittle
+
+tooMuch:
+	mov		dx, ax
+	sub		dx, 0x1
+	jmp		binary_search
+
+tooLittle:
+	mov		cx, ax
+	add		cx, 0x1
+	jmp		binary_search
+
+rigthAns:
+	mov		bx, final
+	call	print_string
+	ret
+
+stop:
+	jmp stop
 
 times 510 - ($-$$) db 0	; Pad with zeros
 dw 0xaa55		; Boot signatures
