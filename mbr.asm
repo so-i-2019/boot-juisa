@@ -1,74 +1,175 @@
-	;; mbr.asm - A simple x86 bootloader example.
-	;;
-	;; In worship to the seven hacker gods and for the honor 
-	;; of source code realm, we hereby humbly offer our sacred 
-	;; "Hello World" sacrifice. May our code remain bugless.
+; o que fazer:
+; 	função de printar string - oks!
+; 	função de ler int - ok!
+; 	função printar int - ok(?)
+; 	busca binaria
+; 	funcionar
 
+	org 0x7c00
+
+	xor ax, ax
+	mov ds, ax
+	mov es, ax
+	mov fs, ax
+	mov gs, ax
+	jmp init
+
+;Strings 
+welcome: 	db 'Think of a number from 1 to 1000. We will easily guess it', 0xd, 0xa, 0x0 
+intro: 		db 'Type 0 if its just right, 1 if the number is too low, and 2 if its too high', 0xd, 0xa, 0x0
+guess:		db 'I bet you the number you were thinking is '
+final: 		db 'I told it would be easy!', 0xd, 0xa, 0x0
+new_line:	db 0xd, 0xa, 0x0
+
+init:	
+	mov 	ah, 0xe		; Configure BIOS teletype mode
 	
-	org 0x7c00		; Our load address
+	mov		bx, welcome
+	call 	print_string 
+	
+	mov		bx, intro
+	call 	print_string 
+	
+	mov 	bx, 0		; May be 0 because org directive.
 
-	mov ah, 0xe		; Configure BIOS teletype mode
+;; ---------------------------------------
+;; ---- Prints some string ----------------
+;; parameters:
+;;	bx: string address
+;; ---------------------------------------
+print_string:
+	push 	bx
+	push 	cx
+	
+	jmp 	loop_print
 
-	mov bx, 0		; May be 0 because org directive.
+loop_print:
+	mov 	cl, [bx]
+	
+	cmp 	cl, 0x0
+	je 		end_loop_print
 
-loop:				; Write a 0x0-terminated ascii string
-	mov al, [here + bx]	
-	int 0x10
-	cmp al, 0x0
-	je end
-	add bx, 0x1		
-	jmp loop
+	call 	put_char
+	add 	bx, 0x1
+	
+	jmp 	loop_print
+
+end_loop_print:
+	pop 	cx
+	pop 	bx
+	ret
+
+;; ---------------------------------------
+;; ---- Prints one char ----------------
+;; ---------------------------------------
+put_char:
+	push 	ax
+
+	mov 	ah, 0x0e
+	mov 	al, cl
+	int 	0x10
+
+	pop 	ax
+	ret
+
+print_digit:
+	push 	cx
+
+	add 	cx, '0'
+	call 	put_char
+
+	pop 	cx
+	ret
+
+print_int:
+	push 	ax
+	push 	bx
+	push 	cx
+	push 	dx
+
+	mov 	dx, -1
+	push 	dx
+
+print_int_loop:
+	cmp 	cx, 0x0
+	je 		print_int_end
+
+	mov 	dx, 0x0
+	mov 	bx, 0xa		;; denominador
+	mov 	ax, cx		;; numerador
+
+	div 	bx
+
+	mov 	bx, cx
+	mov 	cx, dx
+
+	push 	cx
+
+	mov 	cx, ax
+	jmp 	loop_print_int
+	
+print_int_end:
+	pop 	cx
+
+	cmp 	cx, -1
+	je 		reverse_int
+
+	call 	print_digit
+	jmp 	print_int_end
+
+reverse_int:
+	mov 	bx, new_line
+	call 	print_string
+	
+	pop 	dx
+	pop 	cx
+	pop 	bx
+	pop 	ax
+	ret
+
+;; ---------------------------------------
+;; ---- Read one int from stdin ----------
+;; ---------------------------------------
+get_int:
+	push 	ax
+	push	cx
+	mov		bx, 0x0
+
+get_int_loop:
+	mov		ah, 0x0
+	int		0x16
+	
+	cmp		al, 0xd
+	jl		get_int_end
+
+	mov		ah, 0xe
+	int		0x10
+
+	movzx	cx, al
+	sub		cx, '0'
+	imul	bx, 0xa
+	add		bx, cx
+
+	jmp 	get_int_loop
+
+get_int_end:
+	pop 	cx
+	pop 	ax
+	ret
+
+;---------------------------------------------
+;-----eax, o chute, cx o low, dx o high--------
+;---------------------------------------------
+binary_search:
+	mov 	eax, cx
+	add 	eax, dx
+	mov 	edx, 0x0
+	mov 	ax, 0x2
+	div 	ax
+	mov 	ax, eax
 
 end:				; Jump forever (same as jmp end)
 	jmp $
 
-here:				; C-like NULL terminated string
-
-	db 'Hello world!', 0xd, 0xa, 0x0
-	
-	times 510 - ($-$$) db 0	; Pad with zeros
-	dw 0xaa55		; Boot signature
-
-		
-	;; Notes (remove these comments for your code).
-	;; 
-	;; This assembly source code is written for x86 architecture in intel 
-	;; syntax and NASM  assembler dialect. It's mean to be compiled with 
-	;; NASM assembler.
-	;; 
-	;; A label (such as 'loop:') is interpreted by the prepossessesor as
-	;; the offset to (byte count at) the next command (jmp instruction, 
-	;; in this example).
-	;; 
-	;; The directive org 0x7c00 intructs the compiler to automatically
-	;; add the load address to the offset when necessary. Therefore,
-	;; 'mov al, label' virtually becomes 'mov al, label + 0x7c00'. 
-	;; 
-	;; BIOS interruption 'int 0x10' causes the execution flow to jump to 
-	;; the interruption vector table area, where there is a pre-loaded BIOS
-	;; routine capable of outputing characters to the video controller.
-	;; This interruption handler routine reads the byte at the 8-bit
-	;; register and send to the video controller. The video operation
-	;; mode (e.g. ascii character) is controlled by register ah.
-	;; After completing the operation, execution flow is returned to
-	;; the next line after 'int' instruction.
-	;;
-	;; The argument of jmp and je instructions, here, is a relative offset. 
-	;;
-	;; The line db causes the ouput of 1-byte patters at the current
-	;; position in the generated machine code. For instance, the string
-	;; 'Hello World' followed by newline and return ascii codes is inserted
-	;; in the given location.
-	;; 
-	;; The directive 'times X Y' produces a sequence of X repetitions of
-	;; of Y. The type specification 'db' means that Y is a byte (8 bits).
-	;; If it were dw, it would mean 'word', i.e. 16 bits.
-	;;
-	;; Symbol $  denotes the address of (byte count at) the current line.
-	;; Symbol $$ denotes the address of (byte count at) the start of current
-	;; section (in present case, we have only one section). Therefore, the
-	;; value ($-$$) is the current address minus the address of the
-	;; program start. We need 510 minus this amount of zeros.
-	;;
-	;; The line dw causes the output of the 2-byte pattern for the boot
-	;; signature at the current position (positions 511 and 512).
+times 510 - ($-$$) db 0	; Pad with zeros
+dw 0xaa55		; Boot signatures
