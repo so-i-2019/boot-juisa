@@ -81,7 +81,7 @@ put_char:
 print_int:
 	push	ax
 
-	mov		cx, 0x3e8
+	mov		cx, 0x2710
 	call 	print_int_loop
 
 	pop 	ax
@@ -152,7 +152,6 @@ get_int:
 get_int_loop:
 	mov		ah, 0x0
 	int		0x16
-	call	print_debug
 	
 	cmp		al, 0xd
 	jl		get_int_end
@@ -195,6 +194,7 @@ binary_search:
 	jmp		tooLittle
 
 tooMuch:
+	call	print_debug
 	mov		dx, ax
 	sub		dx, 0x1
 	jmp		binary_search
