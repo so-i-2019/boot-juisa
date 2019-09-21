@@ -217,8 +217,6 @@ rigthAns:
 stop:
 	jmp stop
 
-print_debug:
-
 
 times 510 - ($-$$) db 0	; Pad with zeros
 dw 0xaa55		; Boot signatures
