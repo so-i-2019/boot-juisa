@@ -24,7 +24,7 @@ all: $(MBR)
 # Test with x86 emulator
 
 test: $(MBR)
-	qemu-system-i386 -drive format=raw,file=$(MBR) -show-cursor -net none
+	qemu-system-i386 -drive format=raw,file=$(MBR) -net none
 
 # Create bootable USP stick
 

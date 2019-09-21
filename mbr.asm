@@ -81,9 +81,14 @@ put_char:
 print_int:
 	push	ax
 
-	mov		cx, 0x2710
+	mov		cx, 0x2710 ;10000 in hex, allows for printing 4 digit numbers
 	call 	print_int_loop
 
+	push 	bx
+	mov 	bx, new_line
+	call	print_string
+	
+	pop 	bx
 	pop 	ax
 	ret
 
@@ -194,7 +199,6 @@ binary_search:
 	jmp		tooLittle
 
 tooMuch:
-	call	print_debug
 	mov		dx, ax
 	sub		dx, 0x1
 	jmp		binary_search
