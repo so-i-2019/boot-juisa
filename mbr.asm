@@ -6,6 +6,7 @@
 ; 	funcionar
 
 	org 0x7c00
+	bits 16
 
 	xor 	ax, ax
 	mov 	ds, ax
@@ -159,7 +160,7 @@ get_int_loop:
 	mov		ah, 0x0
 	int		0x16
 	
-	cmp		al, 0xd
+	cmp		al, 0xf
 	jl		get_int_end
 
 	mov		ah, 0xe
