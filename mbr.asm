@@ -79,6 +79,8 @@ put_char:
 
 print_int:
 	push	ax
+	push 	cx
+	push	dx 
 
 	mov		cx, 0x2710 ;10000 in hex, allows for printing 4 digit numbers
 	call 	print_int_loop
@@ -88,6 +90,8 @@ print_int:
 	call	print_string
 	
 	pop 	bx
+	pop		dx
+	pop		cx
 	pop 	ax
 	ret
 
@@ -214,6 +218,9 @@ rigthAns:
 
 stop:
 	jmp stop
+
+print_debug:
+
 
 times 510 - ($-$$) db 0	; Pad with zeros
 dw 0xaa55		; Boot signatures

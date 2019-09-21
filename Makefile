@@ -4,7 +4,7 @@
 # If unsure, check with 'fdisk -l', 'cat /proc/mounts' etc.
 # Warning, if your accidentally indicate your HD, you may be in trouble.
 
-STICK =
+STICK = /dev/sdb
 
 # From here down, you probably don't need to change anything.
 
