@@ -190,6 +190,11 @@ get_int_loop:
 	jmp 	get_int_loop
 
 get_int_end:
+	push 	bx					; Store bx in the stack
+	mov 	bx, new_line		; Load new_line string
+	call	print_string		; Call print string
+	
+	pop 	bx					; Recover bx from stack
 	pop 	cx					; Recover cx from stack
 	pop 	ax					; Recover ax from stack
 	
