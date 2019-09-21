@@ -198,7 +198,6 @@ binary_search:
 	jmp		tooLittle
 
 tooMuch:
-	call 	print_debug
 	mov		dx, ax
 	sub		dx, 0x1
 	jmp		binary_search
