@@ -20,7 +20,6 @@ intro: 		db 'Type 0 if its just right, 1 if your number is smaller, and 2 if its
 guess:		db 'I bet you the number you were thinking is '
 final: 		db 'I told it would be easy!', 0xd, 0xa, 0x0
 new_line:	db 0xd, 0xa, 0x0
-debug: 	db 'Debug', 0xd, 0xa, 0x0 
 
 
 init:
@@ -216,13 +215,6 @@ rigthAns:
 
 stop:
 	jmp stop
-
-print_debug:
-	push bx
-	mov		bx, debug
-	call 	print_string
-	pop bx
-	ret
 
 times 510 - ($-$$) db 0	; Pad with zeros
 dw 0xaa55		; Boot signatures
