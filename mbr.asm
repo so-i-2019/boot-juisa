@@ -15,15 +15,14 @@
 	mov 	es, ax
 	mov 	fs, ax
 	mov 	gs, ax
-	mov		esp, 0x0
-	mov		sp, 0x8000
+	mov		esp, 0x8000
 	jmp 	init
 
 ;; ---------------------------------------
 ;; Strings
 ;; ---------------------------------------
 welcome: 	db 'Think of a number from 0 to 32000. We will easily guess.', 0xd, 0xa, 0x0 
-intro: 		db 'Type 0 if its just right, 1 if your number is smaller or 2 if its greater', 0xd, 0xa, 0x0
+intro: 		db 'Type 0 if its just right, 1 if your number is smaller, 2 if its greater', 0xd, 0xa, 0x0
 guess:		db 'I bet you the number you thought is ', 0xd, 0xa, 0x0
 final: 		db 'I told you it would be easy!', 0xd, 0xa, 0x0
 error_str: 	db 'a', 0xd, 0xa, 0x0
@@ -90,17 +89,19 @@ put_char:
 ;; ---------------------------------------
 print_int:
 	push	ax					; Store ax in the stack
+	push	bx
 	push 	cx					; Store bx in the stack
+	push	dx
 
 	mov		cx, 0x2710 			; Initialize 10000 in cx
 	call 	print_int_loop		; Start printing
 
-	push 	bx					; Store bx in the stack
 	mov 	bx, new_line		; Load new_line string
 	call	print_string		; Call print string
 	
-	pop 	bx					; Recover bx from stack
+	pop		dx
 	pop		cx					; Recover cx from stack
+	pop 	bx					; Recover bx from stack
 	pop 	ax					; Recover ax from stack
 	ret
 
@@ -108,7 +109,12 @@ print_int_loop:
 	push	ax					; Store ax in the stack
 	
 	mov		bx, cx				; Copy value of mod to bx
-	call 	divide				; Divide ax and bx
+	
+	push	dx					; Divide ax by bx
+	mov		dx, 0x0
+	div 	bx					
+	pop		dx					
+	
 	call 	mod					; Calculate mod, to get the number to print (in bx)
 
 	add		bx, '0'				; Int to char
@@ -117,28 +123,18 @@ print_int_loop:
 	
 	mov		bx, 0xa				; Divide mod by 10
 	mov		ax, cx
-	call 	divide
+	
+	push	dx					; Divide ax by bx
+	mov		dx, 0x0
+	div 	bx					
+	pop		dx
+	
 	mov 	cx, ax
-
 	pop 	ax					; Recover ax from stack
 
 	cmp		cx, 0x0				; Compare mod and 0
 	jne		print_int_loop		; If they're equal, done printing number
 	ret
-
-
-;; ---------------------------------------
-;; Divide to numbers (ax = ax/bx)
-;; ---------------------------------------
-divide:
-	push 	dx					; Store dx in the stack
-
-	mov		dx, 0x0				; Reset dx
-	div 	bx					; Divide ax by bx
-
-	pop 	dx					; Recover dx from stack
-	ret
-
 
 ;; ---------------------------------------
 ;; Get mod (ax - floor(ax/cx) * cx)
@@ -211,9 +207,12 @@ get_int_end:
 binary_search:
 	mov		ax, cx				; mid = left
 	add		ax, dx				; mid += right
-	mov 	bx, 0x2			; Initialize bx = 2
+	mov 	bx, 0x2				; Initialize bx = 2
 
-	call	divide				; mid /= 2
+	push	dx					; Divide ax by bx
+	mov 	dx, 0x0
+	div 	bx					
+	pop		dx
 
 	mov	 	bx, guess			; Load guess string
 	call	print_string		; Call print function
@@ -221,6 +220,9 @@ binary_search:
 	call	print_int			; Print mid
 
 	call	get_int				; Get number from stdin
+
+	cmp		cx, dx				; left == right
+	jg		stop				; the end
 
 	cmp		bx, 0x0				; bx = 0
 	je	 	rigthAns			; if bx == 0, number was guessed
@@ -235,12 +237,12 @@ binary_search:
 
 tooMuch:
 	mov		dx, ax				; right = mid
-	sub		dx, 0x1				; mid -= 1
+	sub		dx, 0x1				; right -= 1
 	jmp		binary_search		; Continue binary search
 
 tooLittle:
 	mov		cx, ax				; left = mid
-	add		cx, 0x1				; mid += 1
+	add		cx, 0x1				; left += 1
 	jmp		binary_search		; Continue binary search
 
 rigthAns:
