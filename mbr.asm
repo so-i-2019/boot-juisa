@@ -20,7 +20,7 @@
 ;; ---------------------------------------
 ;; Strings
 ;; ---------------------------------------
-welcome: 	db 'Think of a number from 0 to 65000. We will easily guess it', 0xd, 0xa, 0x0 
+welcome: 	db 'Think of a number from 0 to 32000. We will easily guess it', 0xd, 0xa, 0x0 
 intro: 		db 'Type 0 if its just right, 1 if your number is smaller, and 2 if its greater', 0xd, 0xa, 0x0
 guess:		db 'I bet you the number you were thinking is ', 0xd, 0xa, 0x0
 final: 		db 'I told you it would be easy!', 0xd, 0xa, 0x0
@@ -38,7 +38,7 @@ init:
 	call 	print_string		; Call print function
 	
 	mov		cx, 0x0				; Initialize left pointer (0)
-	mov		dx, 0xffff			; Initialize right pointer (65536)
+	mov		dx, 0x07d00			; Initialize right pointer (65536)
 	call	binary_search		; Call binary search
 
 	mov 	bx, 0				; May be 0 because org directive.
