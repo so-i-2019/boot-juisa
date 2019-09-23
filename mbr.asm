@@ -20,7 +20,7 @@
 ;; ---------------------------------------
 ;; Strings
 ;; ---------------------------------------
-welcome: 	db 'Think of a number from 1 to 65000. We will easily guess it', 0xd, 0xa, 0x0 
+welcome: 	db 'Think of a number from 0 to 65000. We will easily guess it', 0xd, 0xa, 0x0 
 intro: 		db 'Type 0 if its just right, 1 if your number is smaller, and 2 if its greater', 0xd, 0xa, 0x0
 guess:		db 'I bet you the number you were thinking is '
 final: 		db 'I told you it would be easy!', 0xd, 0xa, 0x0
