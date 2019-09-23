@@ -15,8 +15,8 @@
 	mov 	es, ax
 	mov 	fs, ax
 	mov 	gs, ax
-	mov		esp, 0x0
-	mov		sp, 0x8000
+	mov		esp, 0x8000
+	; mov		sp, 0x8000
 	jmp 	init
 
 ;; ---------------------------------------
