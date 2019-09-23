@@ -7,8 +7,8 @@
 ;; at https://www.gnu.org/licenses/gpl-3.0.txt for further information.
 
 
-	org 0x7c00
 	bits 16
+	org 0x7c00
 
 	xor 	ax, ax
 	mov 	ds, ax
