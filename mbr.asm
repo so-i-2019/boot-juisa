@@ -1,5 +1,5 @@
 ;; Copyright (c) 2019 - 
-;;			João Guilherme Madeira Araujo, 
+;;			João Guilherme Madeira Araujo, 9725165
 ;;			Luísa Souza Moura, 10692179
 ;;
 ;; This is free software and distributed under GNU GPL vr.3. Please 
@@ -31,7 +31,7 @@ new_line:	db 0xd, 0xa, 0x0
 ;; Main function
 ;; ---------------------------------------
 init:
-	mov 	ah, 0xe				; Configure BIOS teletype mode
+	; mov 	ah, 0xe				; Configure BIOS teletype mode
 	
 	mov		bx, welcome			; Load welcome string
 	call 	print_string 		; Call print function
