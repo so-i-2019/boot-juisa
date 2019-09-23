@@ -22,7 +22,7 @@
 ;; ---------------------------------------
 welcome: 	db 'Think of a number from 0 to 65000. We will easily guess it', 0xd, 0xa, 0x0 
 intro: 		db 'Type 0 if its just right, 1 if your number is smaller, and 2 if its greater', 0xd, 0xa, 0x0
-guess:		db 'I bet you the number you were thinking is '
+guess:		db 'I bet you the number you were thinking is ', 0xd, 0xa, 0x0
 final: 		db 'I told you it would be easy!', 0xd, 0xa, 0x0
 new_line:	db 0xd, 0xa, 0x0
 
@@ -166,37 +166,40 @@ mod:
 ;; ---- Read one int from stdin ----------
 ;; ---------------------------------------
 get_int:
-	push 	ax					; Store ax in the stack
-	push	cx					; Store cx in the stack
-	mov		bx, 0x0				; Initialize bx = 0
+    push	ax
+    push	cx
+		push	dx
+    mov		bx, 0
 
 get_int_loop:
-	mov		ah, 0x0				; Get char
-	int		0x16				; Interruption
-	
-	cmp		al, 0xe				; al = 14
-	jl		get_int_end			; Number is over
+    mov		ah, 0x0
+    int		0x16    ; Reads a single character from the keyboard
 
-	mov		ah, 0xe				
-	int		0x10				; Interruption
+    cmp		al, 14  ; Checks if char is '\n'
+    jl		get_int_end
 
-	movzx	cx, al				; Copy al to cx
-	sub		cx, '0'				; Char to integer
-	imul	bx, 0xa				; Multiplies bx by 10
-	add		bx, cx				; bx = bx + cx
+    mov		ah, 0xe ; Immediately prints it on screen (didn't call printChar because it's already in al)
+    int		0x10
 
-	jmp 	get_int_loop
+    movzx	dx, al; Stores read digit in dx (zero-extendension from 8 to 16 bits)
+    sub		dx, '0' ; Transforms ASCII into integer (not checking if it is between '0' and '9')
+
+    imul	bx, 0xA; Multiplies the number being read by 10 so that newly read int can be added
+
+    add		bx, dx  ; Adds digit that was just read
+
+    jmp		get_int_loop
 
 get_int_end:
-	push 	bx					; Store bx in the stack
-	mov 	bx, new_line		; Load new_line string
-	call	print_string		; Call print string
+		push	bx					; Store bx in the stack
+		mov 	bx, new_line		; Load new_line string
+		call	print_string		; Call print string
 	
-	pop 	bx					; Recover bx from stack
-	pop 	cx					; Recover cx from stack
-	pop 	ax					; Recover ax from stack
-	
-	ret
+		pop		bx					; Recover bx from stack
+		pop 	dx
+		pop		cx
+    pop		ax
+    ret
 
 ;---------------------------------------------
 ; Binary search
@@ -208,6 +211,10 @@ binary_search:
 	mov 	bx, 0x2				; Initialize bx = 2
 
 	call	divide				; mid /= 2
+
+	mov	 	bx, guess
+	call	print_string
+
 	call	print_int			; Print mid
 
 	call	get_int				; Get number from stdin
