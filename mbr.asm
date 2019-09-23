@@ -15,15 +15,18 @@
 	mov 	es, ax
 	mov 	fs, ax
 	mov 	gs, ax
+	mov		esp, 0x0
+	mov		sp, 0x8000
 	jmp 	init
 
 ;; ---------------------------------------
 ;; Strings
 ;; ---------------------------------------
-welcome: 	db 'Think of a number from 0 to 32000. We will easily guess it', 0xd, 0xa, 0x0 
-intro: 		db 'Type 0 if its just right, 1 if your number is smaller, and 2 if its greater', 0xd, 0xa, 0x0
-guess:		db 'I bet you the number you were thinking is ', 0xd, 0xa, 0x0
+welcome: 	db 'Think of a number from 0 to 32000. We will easily guess.', 0xd, 0xa, 0x0 
+intro: 		db 'Type 0 if its just right, 1 if your number is smaller or 2 if its greater', 0xd, 0xa, 0x0
+guess:		db 'I bet you the number you thought is ', 0xd, 0xa, 0x0
 final: 		db 'I told you it would be easy!', 0xd, 0xa, 0x0
+error_str: 	db 'a', 0xd, 0xa, 0x0
 new_line:	db 0xd, 0xa, 0x0
 
 
@@ -86,7 +89,7 @@ put_char:
 ;; Print an integer
 ;; ---------------------------------------
 print_int:
-push	ax					; Store ax in the stack
+	push	ax					; Store ax in the stack
 	push 	cx					; Store bx in the stack
 
 	mov		cx, 0x2710 			; Initialize 10000 in cx
@@ -166,39 +169,39 @@ mod:
 ;; ---- Read one int from stdin ----------
 ;; ---------------------------------------
 get_int:
-    push	ax
-    push	cx
-		push	dx
-    mov		bx, 0
+    push	ax					; Store ax in the stack
+    push	cx					; Store cx in the stack
+	push	dx					; Store dx in the stack
+    mov		bx, 0				
 
 get_int_loop:
     mov		ah, 0x0
-    int		0x16    ; Reads a single character from the keyboard
+    int		0x16    			; Reads a single character from the keyboard
 
-    cmp		al, 14  ; Checks if char is '\n'
+    cmp		al, 14  			; Checks if char is '\n'
     jl		get_int_end
 
-    mov		ah, 0xe ; Immediately prints it on screen (didn't call printChar because it's already in al)
+    mov		ah, 0xe 			; Immediately prints it on screen (didn't call printChar because it's already in al)
     int		0x10
 
-    movzx	dx, al; Stores read digit in dx (zero-extendension from 8 to 16 bits)
-    sub		dx, '0' ; Transforms ASCII into integer (not checking if it is between '0' and '9')
+    movzx	dx, al				; Stores read digit in dx (zero-extendension from 8 to 16 bits)
+    sub		dx, '0' 			; Transforms ASCII into integer (not checking if it is between '0' and '9')
 
-    imul	bx, 0xA; Multiplies the number being read by 10 so that newly read int can be added
+    imul	bx, 0xA				; Multiplies the number being read by 10 so that newly read int can be added
 
-    add		bx, dx  ; Adds digit that was just read
+    add		bx, dx  			; Adds digit that was just read
 
     jmp		get_int_loop
 
 get_int_end:
-		push	bx					; Store bx in the stack
-		mov 	bx, new_line		; Load new_line string
-		call	print_string		; Call print string
+	push	bx					; Store bx in the stack
+	mov 	bx, new_line		; Load new_line string
+	call	print_string		; Call print string
 	
-		pop		bx					; Recover bx from stack
-		pop 	dx
-		pop		cx
-    pop		ax
+	pop		bx					; Recover bx from stack
+	pop 	dx					; Recover dx from stack
+	pop		cx					; Recover cx from stack
+    pop		ax					; Recover ax from stack
     ret
 
 ;---------------------------------------------
@@ -207,13 +210,13 @@ get_int_end:
 ;---------------------------------------------
 binary_search:
 	mov		ax, cx				; mid = left
-	add		ax, dx				; mid += right 
-	mov 	bx, 0x2				; Initialize bx = 2
+	add		ax, dx				; mid += right
+	mov 	bx, 0x2			; Initialize bx = 2
 
 	call	divide				; mid /= 2
 
-	mov	 	bx, guess
-	call	print_string
+	mov	 	bx, guess			; Load guess string
+	call	print_string		; Call print function
 
 	call	print_int			; Print mid
 
@@ -224,8 +227,11 @@ binary_search:
 	
 	cmp		bx, 0x1				; bx = 1
 	je		tooMuch				; bx == 1, number was too big
+	
+	cmp		bx, 0x2				; bx = 2
+	je		tooLittle			; bx == 2, number was too small
 
-	jmp		tooLittle			; else, number was too small
+	jmp 	error
 
 tooMuch:
 	mov		dx, ax				; right = mid
@@ -242,6 +248,10 @@ rigthAns:
 	call	print_string		; Call print function
 	ret
 
+error:
+	mov	 	bx, error_str		; Load error string
+	call	print_string		; Call print function
+	jmp 	stop				; Jump to the end
 
 stop:
 	jmp stop					; The end \o/
