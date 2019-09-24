@@ -6,7 +6,7 @@
 ;; refer to the companion file LICENSING or to the online documentation
 ;; at https://www.gnu.org/licenses/gpl-3.0.txt for further information.
 
-
+configure:
 	bits 16
 	org 0x7c00
 
@@ -15,7 +15,14 @@
 	mov 	es, ax
 	mov 	fs, ax
 	mov 	gs, ax
-	mov		esp, 0x8000
+
+	mov 	ax, 0x0
+	mov 	sp, ax
+	mov 	ax, 0x7c0
+	mov 	ss, ax
+
+	mov		ah, 0xe
+
 	jmp 	init
 
 ;; ---------------------------------------
@@ -89,9 +96,8 @@ put_char:
 ;; ---------------------------------------
 print_int:
 	push	ax					; Store ax in the stack
-	push	bx
-	push 	cx					; Store bx in the stack
-	push	dx
+	push	bx					; Store bx in the stack
+	push 	cx					; Store cx in the stack
 
 	mov		cx, 0x2710 			; Initialize 10000 in cx
 	call 	print_int_loop		; Start printing
@@ -99,7 +105,6 @@ print_int:
 	mov 	bx, new_line		; Load new_line string
 	call	print_string		; Call print string
 	
-	pop		dx
 	pop		cx					; Recover cx from stack
 	pop 	bx					; Recover bx from stack
 	pop 	ax					; Recover ax from stack
@@ -110,11 +115,7 @@ print_int_loop:
 	
 	mov		bx, cx				; Copy value of mod to bx
 	
-	push	dx					; Divide ax by bx
-	mov		dx, 0x0
-	div 	bx					
-	pop		dx					
-	
+	call 	divide
 	call 	mod					; Calculate mod, to get the number to print (in bx)
 
 	add		bx, '0'				; Int to char
@@ -124,10 +125,7 @@ print_int_loop:
 	mov		bx, 0xa				; Divide mod by 10
 	mov		ax, cx
 	
-	push	dx					; Divide ax by bx
-	mov		dx, 0x0
-	div 	bx					
-	pop		dx
+	call	divide
 	
 	mov 	cx, ax
 	pop 	ax					; Recover ax from stack
@@ -158,6 +156,19 @@ mod:
 	pop		dx					; Recover dx from stack
 	pop		cx					; Recover cx from stack
 	pop		ax					; Recover ax from stack
+	ret
+
+
+;; ---------------------------------------
+;; Divide to numbers (ax = ax/bx)
+;; ---------------------------------------
+divide:
+	push 	dx					; Store dx in the stack
+
+	mov		dx, 0x0				; Reset dx
+	div 	bx					; Divide ax by bx
+
+	pop 	dx					; Recover dx from stack
 	ret
 
 
@@ -200,6 +211,7 @@ get_int_end:
     pop		ax					; Recover ax from stack
     ret
 
+
 ;---------------------------------------------
 ; Binary search
 ; mid = ax; cx = left; dx = right
@@ -209,10 +221,7 @@ binary_search:
 	add		ax, dx				; mid += right
 	mov 	bx, 0x2				; Initialize bx = 2
 
-	push	dx					; Divide ax by bx
-	mov 	dx, 0x0
-	div 	bx					
-	pop		dx
+	call 	divide
 
 	mov	 	bx, guess			; Load guess string
 	call	print_string		; Call print function
